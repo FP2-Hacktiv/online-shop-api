@@ -99,14 +99,14 @@ export const updateProduct = asyncHandler(async (req, res) => {
     }
 
     let image = req.files.image;
-
+    image.name = `photo_${Date.now()}_${image.name}`;
     image.mv(`${process.env.FILE_UPLOAD_PATH}/${image.name}`, async (err) => {
       if (err) {
         res.status(401);
         throw new Error(err);
       }
 
-      const dataUpdated = { ...req.body, image: image.name };
+      const dataUpdated = { ...req.body, image: `uploads/${image.name}`, };
 
       product = await Product.findByIdAndUpdate(req.params.id, dataUpdated, {
         new: true,
