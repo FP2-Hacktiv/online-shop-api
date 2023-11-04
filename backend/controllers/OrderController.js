@@ -13,6 +13,12 @@ export const getOrders = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, count: orders.length, data: orders });
 });
 
+export const getOrder = asyncHandler(async (req, res) => {
+  const orders = await Order.findById(req.params.id);
+
+  res.status(201).json({ success: true, count: orders.length, data: orders });
+});
+
 //@DESC Add Order
 //@ROUTE /api/v1/orders
 //@METHOD POST
@@ -85,6 +91,47 @@ export const addOrder = asyncHandler(async (req, res) => {
   }
 });
 
+//@DESC Report Sales
+//@ROUTE /api/v1/orders/report-sales
+//@METHOD GET
+
+export const reportSales = asyncHandler(async (req, res) => {
+  try {
+    const productSales = await Order.aggregate([
+      {
+        $unwind: "$products",
+      },
+      {
+        $group: {
+          _id: "$products.product",
+          totalSold: { $sum: "$products.quantity" },
+          totalProfit: { $sum: "$products.amount" },
+        },
+      },
+      {
+        $lookup: {
+          from: "products", 
+          localField: "_id",
+          foreignField: "_id",
+          as: "productInfo",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          totalSold: 1,
+          totalProfit: 1,
+          productName: { $arrayElemAt: ["$productInfo.name", 0] },
+          productPrice: { $arrayElemAt: ["$productInfo.price", 0] },
+        },
+      },
+    ]);
+
+    res.status(200).json({ success: true, data: productSales });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to get sales data" });
+  }
+});
 
 
 //@DESC Update Order
