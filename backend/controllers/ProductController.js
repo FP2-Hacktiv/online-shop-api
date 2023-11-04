@@ -5,7 +5,7 @@ import Product from "../models/Product.js";
 //@ROUTE /api/v1/products
 //@METHOD GET
 export const getAll = asyncHandler(async (req, res) => {
-  const products = await Product.find({}).populate("user").select("-password").sort({ _id: -1 });
+  const products = await Product.find({}).sort({ _id: -1 });
 
   res
     .status(201)
@@ -16,7 +16,7 @@ export const getAll = asyncHandler(async (req, res) => {
 //@ROUTE /api/v1/products
 //@METHOD GET
 export const getProduct = asyncHandler(async (req, res) => {
-  const products = await Product.findById(req.params.id).populate("user").select("-password");
+  const products = await Product.findById(req.params.id);
 
   res
     .status(201)
@@ -27,19 +27,46 @@ export const getProduct = asyncHandler(async (req, res) => {
 //@ROUTE /api/v1/products
 //@METHOD POST
 export const addProduct = asyncHandler(async (req, res) => {
-  const {name, brand, description, category, price, countInStock} = req.body;
+  if (!req.files) {
+    res.status(401).json({ success: false, message: "No file uploaded" });
+  } else {
+    if (!req.files.image.mimetype.startsWith("image")) {
+      res.status(401);
+      throw new Error("Please add image file");
+    }
 
-  const products = await Product.create({
-    name,
-    description,
-    brand,
-    category,
-    price,
-    countInStock,
-    user: req.user.id,
-  });
+    if (!req.files.image.size > process.env.FILE_UPLOAD_LIMIT) {
+      res.status(401);
+      throw new Error(
+        `Please add a image less than ${process.env.FILE_UPLOAD_LIMIT}`
+      );
+    }
 
-  res.status(201).json({ success: true, data: products });
+    let image = req.files.image;
+    image.name = `photo_${Date.now()}_${image.name}`;
+    const { name, description, brand, category, price, countInStock } =
+      req.body;
+
+    image.mv(`${process.env.FILE_UPLOAD_PATH}/${image.name}`, async (err) => {
+      if (err) {
+        res.status(401);
+        throw new Error(err);
+      }
+
+      const products = await Product.create({
+        name,
+        image: `uploads/${image.name}`,
+        description,
+        brand,
+        category,
+        price,
+        countInStock,
+        user: req.user.id,
+      });
+
+      res.status(201).json({ success: true, data: products });
+    });
+  }
 });
 
 //@DESC Update Product
