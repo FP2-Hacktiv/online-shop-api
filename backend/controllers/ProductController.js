@@ -55,7 +55,7 @@ export const addProduct = asyncHandler(async (req, res) => {
 
       const products = await Product.create({
         name,
-        image: `uploads/${image.name}`,
+        image: `${req.protocol}://${req.get('host')}uploads/${image.name}`,
         description,
         brand,
         category,
@@ -106,7 +106,7 @@ export const updateProduct = asyncHandler(async (req, res) => {
         throw new Error(err);
       }
 
-      const dataUpdated = { ...req.body, image: `uploads/${image.name}`, };
+      const dataUpdated = { ...req.body, image: `${req.protocol}://${req.get('host')}/uploads/${image.name}`, };
 
       product = await Product.findByIdAndUpdate(req.params.id, dataUpdated, {
         new: true,
