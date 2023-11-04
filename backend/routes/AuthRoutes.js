@@ -7,12 +7,14 @@ import {
 	updatePassword,
 	forgotPassword,
 	resetPassword,
+	logout,
 } from '../controllers/AuthController.js';
 import ProtectMiddleware from '../middlewares/ProtectMiddleware.js';
 
 const router = express.Router();
 
 router.route('/login').post(login);
+router.route('/logout').post(ProtectMiddleware, logout);
 router.route('/register').post(register);
 router.route('/me').get(ProtectMiddleware, getMe);
 router.route('/updateProfile').put(ProtectMiddleware, updateProfile);

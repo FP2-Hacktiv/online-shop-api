@@ -206,3 +206,18 @@ export const resetPassword = asyncHandler(async (req, res) => {
 
 	res.status(201).json({ success: true, data: user });
 });
+
+//@DESC Logout User
+//@ROUTE /api/v1/auth/logout
+//@METHOD GET
+//@DESC Logout User
+//@ROUTE /api/v1/auth/logout
+//@METHOD GET
+export const logout = asyncHandler(async (req, res) => {
+  req.user.token = null;
+  await req.user.save();
+
+  res.status(200).json({ success: true, message: 'Logout successful' });
+});
+
+
