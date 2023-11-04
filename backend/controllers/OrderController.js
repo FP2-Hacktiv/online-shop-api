@@ -87,7 +87,7 @@ export const addOrder = asyncHandler(async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     console.log(error);
-    res.status(500).json({ success: false, message: "Failed to place order!" });
+    res.status(500).json({ success: false, message: "Failed to place order!", error });
   }
 });
 
@@ -129,7 +129,7 @@ export const reportSales = asyncHandler(async (req, res) => {
 
     res.status(200).json({ success: true, data: productSales });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to get sales data" });
+    res.status(500).json({ success: false, message: "Failed to get sales data", error: error });
   }
 });
 
