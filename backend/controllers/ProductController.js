@@ -55,7 +55,7 @@ export const addProduct = asyncHandler(async (req, res) => {
 
       const products = await Product.create({
         name,
-        image: `${req.protocol}://${req.get('host')}uploads/${image.name}`,
+        image: `${req.protocol}://${req.get('host')}/uploads/${image.name}`,
         description,
         brand,
         category,
