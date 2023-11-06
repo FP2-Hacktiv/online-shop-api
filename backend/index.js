@@ -30,6 +30,12 @@ const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
 // WELCOME ROUTE
+app.get("/", (req, res) => {
+  res
+    .status(201)
+    .json({ success: true, message: "API is running" });
+});
+
 app.get("/api/v1/", (req, res) => {
   res
     .status(201)
