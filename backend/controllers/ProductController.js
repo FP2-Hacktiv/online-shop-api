@@ -1,5 +1,8 @@
 import asyncHandler from "express-async-handler";
 import Product from "../models/Product.js";
+import { getDownloadURL, getStorage, ref, uploadBytesResumable } from "firebase/storage";
+import { initializeApp } from "firebase/app";
+import firebaseConfig from "../config/firebase.config.js";
 
 //@DESC Get All Products
 //@ROUTE /api/v1/products
@@ -27,45 +30,52 @@ export const getProduct = asyncHandler(async (req, res) => {
 //@ROUTE /api/v1/products
 //@METHOD POST
 export const addProduct = asyncHandler(async (req, res) => {
-  if (!req.files) {
-    res.status(401).json({ success: false, message: "No file uploaded" });
+  if (!req.files || !req.files.image) {
+    res.status(400).json({ success: false, message: "No image file uploaded" });
   } else {
     if (!req.files.image.mimetype.startsWith("image")) {
-      res.status(401);
-      throw new Error("Please add image file");
-    }
-
-    if (!req.files.image.size > process.env.FILE_UPLOAD_LIMIT) {
-      res.status(401);
-      throw new Error(
-        `Please add a image less than ${process.env.FILE_UPLOAD_LIMIT}`
-      );
-    }
-
-    let image = req.files.image;
-    image.name = `photo_${Date.now()}_${image.name}`;
-    const { name, description, brand, category, price, countInStock } =
-      req.body;
-
-    image.mv(`${process.env.FILE_UPLOAD_PATH}/${image.name}`, async (err) => {
-      if (err) {
-        res.status(401);
-        throw new Error(err);
-      }
-
-      const products = await Product.create({
-        name,
-        image: `${req.protocol}://${req.get('host')}/uploads/${image.name}`,
-        description,
-        brand,
-        category,
-        price,
-        countInStock,
-        user: req.user.id,
+      res.status(400).json({ success: false, message: "Please add an image file" });
+    } else if (req.files.image.size > process.env.FILE_UPLOAD_LIMIT) {
+      res.status(400).json({
+        success: false,
+        message: `Please add an image smaller than ${process.env.FILE_UPLOAD_LIMIT} bytes`,
       });
+    } else {
+      initializeApp(firebaseConfig);
 
-      res.status(201).json({ success: true, data: products });
-    });
+      const storage = getStorage();
+
+      try {
+        const dateTime = Date.now();
+        const fileName = `images/${dateTime}`;
+        const storageRef = ref(storage, fileName);
+        const metadata = {
+          contentType: req.files.image.mimetype,
+        };
+        const snapshot = await uploadBytesResumable(
+          storageRef,
+          req.files.image.data, // Use req.files.image.data to access the file data
+          metadata
+        );
+        const url = await getDownloadURL(snapshot.ref);
+        const { name, description, brand, category, price, countInStock } = req.body;
+        const product = await Product.create({
+          name,
+          image: `${url}`,
+          description,
+          brand,
+          category,
+          price,
+          countInStock,
+          user: req.user.id,
+        });
+
+        res.status(201).json({ success: true, data: product });
+      } catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: "Error uploading the image" });
+      }
+    }
   }
 });
 
