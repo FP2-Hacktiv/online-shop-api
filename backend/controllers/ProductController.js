@@ -116,8 +116,9 @@ export const updateProduct = asyncHandler(async (req, res) => {
         throw new Error(err);
       }
 
-      const dataUpdated = { ...req.body, image: `${req.protocol}://${req.get('host')}/uploads/${image.name}`, };
-
+      product = await Product.findById(req.params.id);
+      updatedStock = product.countInStock + req.body.countInStock;
+      const dataUpdated = { ...req.body, countInStock: updatedStock, image: `${req.protocol}://${req.get('host')}/uploads/${image.name}`, };
       product = await Product.findByIdAndUpdate(req.params.id, dataUpdated, {
         new: true,
         runValidators: true,
