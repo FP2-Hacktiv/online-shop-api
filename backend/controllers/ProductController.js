@@ -90,6 +90,11 @@ export const updateProduct = asyncHandler(async (req, res) => {
     throw new Error("Product not found");
   }
 
+  // if (req.user.id !== product.user.toString()) {
+  //   res.status(401);
+  //   throw new Error("User not authorize to update product");
+  // }
+
   if (req.files) {
     if (!req.files.image.mimetype.startsWith("image")) {
       res.status(401);
@@ -111,19 +116,17 @@ export const updateProduct = asyncHandler(async (req, res) => {
         throw new Error(err);
       }
 
-      const updatedStock = product.countInStock + req.body.countInStock;
-      const dataUpdated = { ...req.body, countInStock: updatedStock, image: `${req.protocol}://${req.get('host')}/uploads/${image.name}`, };
-      const updatedProduct = await Product.findByIdAndUpdate(req.params.id, dataUpdated, {
+      const dataUpdated = { ...req.body, image: `${req.protocol}://${req.get('host')}/uploads/${image.name}`, };
+
+      product = await Product.findByIdAndUpdate(req.params.id, dataUpdated, {
         new: true,
         runValidators: true,
       });
 
-      res.status(201).json({ success: true, data: updatedProduct });
+      res.status(201).json({ success: true, data: product });
     });
   } else {
-    const updatedStock = product.countInStock + req.body.countInStock;
-    const dataUpdated = { ...req.body, countInStock: updatedStock};
-    product = await Product.findByIdAndUpdate(req.params.id, dataUpdated, {
+    product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
     res.status(201).json({ success: true, data: product });
