@@ -21,6 +21,12 @@ const app = express();
 connectDB();
 
 app.use(cors());
+// Specific Configuration
+app.use(cors({
+  origin: 'http://localhost:5173', // only allow requests from this origin
+  methods: 'GET,POST,PATCH', // specify the allowed methods
+  allowedHeaders: 'Content-Type,Authorization' // specify the allowed headers
+}));
 
 app.use(express.json());
 
